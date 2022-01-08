@@ -1,5 +1,7 @@
-package client.commands;
+package client.service;
 
+import client.commands.Command;
+import client.util.RestClient;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 

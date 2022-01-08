@@ -1,4 +1,4 @@
-package client.commands;
+package client.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

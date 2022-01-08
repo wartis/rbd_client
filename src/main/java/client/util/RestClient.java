@@ -1,14 +1,14 @@
-package client.commands;
+package client.util;
 
+import client.auth.User;
+import client.commands.Command;
 import lombok.Setter;
 import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.jetbrains.annotations.NotNull;
-
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -22,8 +22,6 @@ public class RestClient {
     private final static String BASE_URL = "http://localhost:8080/turtle/api";
     private final static String REGISTER_URL = "http://localhost:8080/auth/registration";
     private final static String LOGIN_URL = "http://localhost:8080/auth/login";
-    public static final MediaType JSON
-        = MediaType.parse("application/json; charset=utf-8");
 
     @Setter
     private String JSESSIONID = "";
@@ -34,14 +32,10 @@ public class RestClient {
         if (!isLogin()) {
             return "Для начала требуется авторизоваться!";
         }
-
-        final Request request = new Request.Builder()
-            .url(BASE_URL + command.relUrl + "?" + getQueryString(params))
-            .addHeader("Cookie", "JSESSIONID=" +JSESSIONID)
-            //.header("JSESSIONID", JSESSIONID)
-            .build();
-
+        final String url = BASE_URL + command.relUrl + "?" + getQueryString(params);
+        final Request request = RequestHandler.authenticatedGet(url, JSESSIONID);
         final Call call = client.newCall(request);
+
         try {
             final Response response = call.execute();
             return response.body().string();
@@ -56,20 +50,15 @@ public class RestClient {
 
 
     public String login(String username, String password) {
-        User user = new User(username, password);
-
-        final Request request = new Request.Builder()
-            .url(LOGIN_URL)
-            .post(RequestBody.create(user.toJson(), JSON))
-            .build();
+        final User user = new User(username, password);
+        final Request request = RequestHandler.loginOrRegister(LOGIN_URL, user);
 
         final Call call = client.newCall(request);
         try {
             final Response response = call.execute();
             List<String> cookielist = response.headers().values("Set-Cookie");
-            String jsessionid = (cookielist.get(0).split(";"))[0].split("=")[1];
 
-            JSESSIONID = jsessionid;
+            JSESSIONID = (cookielist.get(0).split(";"))[0].split("=")[1];
 
             return "Вы успешно авторизовались. ";
         } catch (IOException e) {
@@ -78,20 +67,15 @@ public class RestClient {
     }
 
     public String register(String username, String password) {
-        User user = new User(username, password);
-
-        final Request request = new Request.Builder()
-            .url(REGISTER_URL)
-            .post(RequestBody.create(user.toJson(), JSON))
-            .build();
+        final User user = new User(username, password);
+        final Request request = RequestHandler.loginOrRegister(REGISTER_URL, user);
 
         final Call call = client.newCall(request);
         try {
             final Response response = call.execute();
             List<String> cookielist = response.headers().values("Set-Cookie");
-            String jsessionid = (cookielist.get(0).split(";"))[0].split("=")[1];
 
-            JSESSIONID = jsessionid;
+            JSESSIONID = (cookielist.get(0).split(";"))[0].split("=")[1];
 
             return "Вы успешно зарегистрировались и авторизовались. ";
         } catch (IOException e) {
